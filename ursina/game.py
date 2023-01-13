@@ -1,0 +1,89 @@
+from ursina import *
+import random as r
+
+app = Ursina()
+window.color = color.white
+camera.orthographic = True
+camera.fov = 10
+
+dino = Animation(
+    'assets\dino',
+    collider='box',
+    x=-5
+)
+
+sound = Audio(
+    'assets/beep',
+    autoplay=False
+)
+
+label = Text(
+    text=f'Points: {0}',
+    color = color.black,
+    position = (-0.6,.4)
+)
+points = 0
+
+cactus = Entity(
+    model='quad',
+    texture='assets\cacti',
+    x = 20,
+    collider='box'
+)
+cacti = []
+
+ground1 = Entity(
+    model="quad",
+    texture="assets/ground",
+    scale=(50,0.5,1),
+    z=1
+)
+ground2 = duplicate(ground1, x=50)
+grounds = [ground1 ,ground2]
+
+gameOver = False
+
+def newCactus():
+    new = duplicate(
+            cactus,
+            x=12+r.randint(0,5)
+        )
+    cacti.append(new)
+    invoke(newCactus, delay=2)
+
+newCactus()
+
+def update():
+    global points
+    global gameOver
+
+    points+=.1
+    label.text = f'Points: {points.__int__()}'
+    for ground in grounds:
+        ground.x -= 6*time.dt
+        if ground.x < -35:
+            ground.x += 100
+    for c in cacti:
+        c.x -= 6*time.dt
+    if dino.intersects().hit:
+        dino.texture='assets\hit'
+        gameOver = True
+        application.pause()
+
+def input(key):
+    if key == 'space':
+        if dino.y < 0.01:
+            sound.play()
+            dino.animate_y(
+                2,
+                duration=0.4,
+                curve=curve.out_sine
+            )
+            dino.animate_y(
+                0,
+                duration=0.4,
+                delay=0.4,
+                curve=curve.in_sine
+            )
+
+app.run()
